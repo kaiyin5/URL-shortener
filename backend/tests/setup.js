@@ -1,0 +1,1 @@
+// Jest setup for ES modules - globals are automatically available
