@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { FiEdit, FiTrash2, FiChevronUp, FiChevronDown } from 'react-icons/fi'
 import axios from 'axios'
 import { useAuthStore } from '../../store/authStore'
+import { useSSE } from '../../hooks/useSSE'
+import { useWeb3 } from '../../hooks/useWeb3'
 import './Dashboard.css'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8828'
@@ -34,6 +36,7 @@ interface DashboardProps {
 
 function Dashboard({ onLogout }: DashboardProps) {
   const { logout } = useAuthStore()
+  const { account, connectWallet, withdraw } = useWeb3()
   const [urlData, setUrlData] = useState<UrlData[]>([])
   const [loading, setLoading] = useState(true)
   const [sortLoading, setSortLoading] = useState(false)
@@ -48,10 +51,108 @@ function Dashboard({ onLogout }: DashboardProps) {
   const [totalItems, setTotalItems] = useState(0)
   const [notification, setNotification] = useState('')
   const [notificationType, setNotificationType] = useState<'success' | 'error'>('error')
+  const [sseConnected, setSseConnected] = useState(false)
+  const [animatingCells, setAnimatingCells] = useState<Set<string>>(new Set())
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchCategory, setSearchCategory] = useState('all')
+  const [withdrawing, setWithdrawing] = useState(false)
+  const abortControllerRef = useRef<AbortController | null>(null)
+
+  const handleSSEMessage = useCallback((data: { type: string; data: any }) => {
+    if (data.type === 'connected') {
+      setSseConnected(true)
+      return
+    }
+    
+    const triggerAnimation = (id: string, type: 'access' | 'shortCode') => {
+      const key = `${id}-${type}`
+      setAnimatingCells(prev => new Set(prev).add(key))
+      setTimeout(() => {
+        setAnimatingCells(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(key)
+          return newSet
+        })
+      }, 600)
+    }
+    
+    const matchesFilter = (item: any) => {
+      if (!searchQuery.trim()) return true
+      switch (searchCategory) {
+        case 'longURL':
+          return item.longURL.toLowerCase().includes(searchQuery.toLowerCase())
+        case 'shortCode':
+          return item.shortCode.toLowerCase().includes(searchQuery.toLowerCase())
+        default:
+          return item.longURL.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                 item.shortCode.toLowerCase().includes(searchQuery.toLowerCase())
+      }
+    }
+    
+    switch (data.type) {
+      case 'accessCount':
+        setUrlData(prev => 
+          prev.map(url => 
+            url._id === data.data._id 
+              ? { ...url, accessCount: data.data.accessCount }
+              : url
+          )
+        )
+        const currentItem = urlData.find(url => url._id === data.data._id)
+        if (currentItem) {
+          triggerAnimation(data.data._id, 'access')
+        }
+        break
+      case 'urlCreated':
+        if (matchesFilter(data.data) && currentPage === 1) {
+          setUrlData(prev => [data.data, ...prev.slice(0, itemsPerPage - 1)])
+          setTotalItems(prev => prev + 1)
+        }
+        break
+      case 'urlUpdated':
+        if (matchesFilter(data.data)) {
+          setUrlData(prev => 
+            prev.map(url => 
+              url._id === data.data._id ? data.data : url
+            )
+          )
+          triggerAnimation(data.data._id, 'shortCode')
+        } else {
+          setUrlData(prev => prev.filter(url => url._id !== data.data._id))
+        }
+        break
+      case 'urlDeleted':
+        setUrlData(prev => prev.filter(url => url._id !== data.data._id))
+        setTotalItems(prev => prev - 1)
+        break
+    }
+  }, [urlData, searchQuery, searchCategory, currentPage, itemsPerPage])
+
+  const sseControl = useSSE(`${API_BASE}/admin/updates`, handleSSEMessage, !loading && !!localStorage.getItem('token'))
+
+  useEffect(() => {
+    // Reset connection status when component unmounts or loading changes
+    if (loading) {
+      setSseConnected(false)
+    }
+  }, [loading])
+
+  useEffect(() => {
+    return () => {
+      sseControl.close()
+      setSseConnected(false)
+    }
+  }, [])
 
   useEffect(() => {
     fetchUrls()
-  }, [currentPage, itemsPerPage])
+  }, [currentPage, itemsPerPage, searchQuery, searchCategory])
+  
+  useEffect(() => {
+    if (!loading) {
+      fetchUrls(true)
+    }
+  }, [sortField, sortOrder])
   
   useEffect(() => {
     if (!loading) {
@@ -61,24 +162,38 @@ function Dashboard({ onLogout }: DashboardProps) {
 
   const fetchUrls = async (isSort = false) => {
     try {
+      // Cancel previous request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+      
+      // Create new AbortController
+      abortControllerRef.current = new AbortController()
+      
       if (isSort) setSortLoading(true)
       
       const params = {
         page: currentPage,
         limit: itemsPerPage,
         sortField,
-        sortOrder
+        sortOrder,
+        search: searchQuery,
+        category: searchCategory
       }
       
       const response = await axios.get(`${API_BASE}/admin/urls`, {
         headers: getAuthHeaders(),
-        params
+        params,
+        signal: abortControllerRef.current.signal
       })
       
       setUrlData(response.data.urls)
       setTotalPages(response.data.pagination.pages)
       setTotalItems(response.data.pagination.total)
     } catch (error: any) {
+      if (error.name === 'CanceledError') {
+        return // Request was cancelled, ignore
+      }
       if (error.response?.status === 401) {
         logout()
       } else {
@@ -149,6 +264,42 @@ function Dashboard({ onLogout }: DashboardProps) {
     setCurrentPage(1)
   }
 
+  const handleWithdraw = async () => {
+    if (!account) {
+      try {
+        await connectWallet()
+      } catch (error) {
+        setNotificationType('error')
+        setNotification('Please connect your wallet first')
+        setTimeout(() => setNotification(''), 5000)
+        return
+      }
+    }
+
+    if (!confirm('Are you sure you want to withdraw all donations? This action cannot be undone.')) {
+      return
+    }
+
+    setWithdrawing(true)
+    try {
+      const tx = await withdraw()
+      setNotification('Transaction sent! Waiting for confirmation...')
+      
+      const receipt = await tx.wait()
+      
+      setNotificationType('success')
+      setNotification(`Withdrawal successful! TX: ${receipt.hash.slice(0, 10)}...`)
+      setTimeout(() => setNotification(''), 5000)
+    } catch (error: any) {
+      const errorMessage = error.message || 'Withdrawal failed'
+      setNotificationType('error')
+      setNotification(errorMessage)
+      setTimeout(() => setNotification(''), 5000)
+    } finally {
+      setWithdrawing(false)
+    }
+  }
+
   // Data is already sorted by backend
 
   const SortIcon = ({ field }: { field: SortField }) => {
@@ -159,10 +310,24 @@ function Dashboard({ onLogout }: DashboardProps) {
   return (
     <div className="dashboard">
       <header className="dashboard-header">
-        <h1>Admin Dashboard</h1>
-        <button onClick={onLogout} className="logout-btn">
-          Logout
-        </button>
+        <div className="title-with-status">
+          <h1>Admin Dashboard</h1>
+          <div className={`live-status ${sseConnected ? 'connected' : 'disconnected'}`}>
+            <span className="live-dot"></span>
+          </div>
+        </div>
+        <div className="header-controls">
+          <button 
+            onClick={handleWithdraw} 
+            disabled={withdrawing}
+            className="withdraw-btn"
+          >
+            {withdrawing ? 'Withdrawing...' : 'Withdraw Donations'}
+          </button>
+          <button onClick={onLogout} className="logout-btn">
+            Logout
+          </button>
+        </div>
       </header>
       <div className="dashboard-content">
         {loading ? (
@@ -170,6 +335,30 @@ function Dashboard({ onLogout }: DashboardProps) {
         ) : (
           <>
             <div className="table-controls">
+              <div className="search-controls">
+                <select 
+                  value={searchCategory}
+                  onChange={(e) => {
+                    setSearchCategory(e.target.value)
+                    setCurrentPage(1)
+                  }}
+                  className="search-category"
+                >
+                  <option value="all">All</option>
+                  <option value="longURL">Long URL</option>
+                  <option value="shortCode">Short Code</option>
+                </select>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value)
+                    setCurrentPage(1)
+                  }}
+                  placeholder="Search..."
+                  className="search-input"
+                />
+              </div>
               <div className="items-per-page">
                 <label>Items per page:</label>
                 <select 
@@ -239,8 +428,8 @@ function Dashboard({ onLogout }: DashboardProps) {
                 {!sortLoading && urlData.map(item => (
                   <tr key={item._id}>
                     <td className="url-cell">{item.longURL}</td>
-                    <td>{item.shortCode}</td>
-                    <td>{item.accessCount}</td>
+                    <td className={animatingCells.has(`${item._id}-shortCode`) ? 'animate-update' : ''}>{item.shortCode}</td>
+                    <td className={animatingCells.has(`${item._id}-access`) ? 'animate-scroll' : ''}>{item.accessCount}</td>
                     <td>{new Date(item.createdAt).toLocaleDateString()}</td>
                   <td className="actions-cell">
                     <div className="tooltip-container">
