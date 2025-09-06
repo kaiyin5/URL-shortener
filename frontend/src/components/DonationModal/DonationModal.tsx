@@ -22,7 +22,7 @@ const DonationModal: React.FC<DonationModalProps> = ({ isOpen, onClose }) => {
     reset
   } = useDonationStore();
   
-  const { account, isConnecting, connectWallet, donate, getUSDAmount } = useWeb3();
+  const { account, isConnecting, connectWallet, disconnectWallet, donate, getUSDAmount } = useWeb3();
 
   useEffect(() => {
     if (ethAmount && parseFloat(ethAmount) > 0) {
@@ -80,16 +80,21 @@ const DonationModal: React.FC<DonationModalProps> = ({ isOpen, onClose }) => {
       if (receipt.status === 1) {
         // Track the donation in backend
         const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8828';
-        await fetch(`${API_BASE}/donation/track`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            transactionHash: receipt.hash,
-            donorAddress: account,
-            ethAmount: parseFloat(ethAmount),
-            usdAmount: usdAmount || 0
-          })
-        });
+        try {
+          await fetch(`${API_BASE}/donation/track`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              transactionHash: receipt.hash,
+              donorAddress: account,
+              ethAmount: parseFloat(ethAmount),
+              usdAmount: usdAmount || 0
+            })
+          });
+        } catch (trackingError) {
+          console.warn('Failed to track donation:', trackingError);
+          // Don't fail the donation if tracking fails
+        }
         
         const nftEligible = usdAmount && usdAmount >= 100;
         setMessage(`Donation successful! ${nftEligible ? 'NFT minted to your wallet.' : 'NFT requires minimum $100 USD.'}`);
@@ -138,6 +143,16 @@ const DonationModal: React.FC<DonationModalProps> = ({ isOpen, onClose }) => {
           ) : (
             <div className="wallet-info">
               <p>Connected: {account.slice(0, 6)}...{account.slice(-4)}</p>
+              <button 
+                className="disconnect-btn" 
+                onClick={() => {
+                  disconnectWallet();
+                  reset();
+                }}
+                title="Disconnect wallet"
+              >
+                ×
+              </button>
             </div>
           )}
           

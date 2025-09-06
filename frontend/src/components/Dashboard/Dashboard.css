@@ -17,6 +17,72 @@
   margin: 0;
 }
 
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.title-with-status {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.title-with-status {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.live-status {
+  display: flex;
+  align-items: center;
+}
+
+.live-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.live-status.connected .live-dot {
+  background-color: #28a745;
+  box-shadow: 0 0 8px rgba(40, 167, 69, 0.6);
+}
+
+.live-status.disconnected .live-dot {
+  background-color: #dc3545;
+  box-shadow: 0 0 8px rgba(220, 53, 69, 0.6);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+
+
+.withdraw-btn {
+  padding: 0.5rem 1rem;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.withdraw-btn:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.withdraw-btn:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
 .logout-btn {
   padding: 0.5rem 1rem;
   background-color: #dc3545;
@@ -253,6 +319,33 @@
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  gap: 1rem;
+}
+
+.search-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.search-category {
+  padding: 0.5rem;
+  border: 1px solid #e1e5e9;
+  border-radius: 4px;
+  background: white;
+  min-width: 100px;
+}
+
+.search-input {
+  padding: 0.5rem;
+  border: 1px solid #e1e5e9;
+  border-radius: 4px;
+  min-width: 200px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #646cff;
 }
 
 .pagination-top {
@@ -377,5 +470,48 @@
   to {
     transform: translateX(0);
     opacity: 1;
+  }
+}
+
+.animate-scroll {
+  animation: scrollDown 0.6s ease-out;
+  background-color: #e8f5e8;
+}
+
+.animate-update {
+  animation: updateFlash 0.6s ease-out;
+  background-color: #fff3cd;
+}
+
+@keyframes scrollDown {
+  0% {
+    transform: translateY(-10px);
+    background-color: #28a745;
+    color: white;
+    font-weight: bold;
+  }
+  50% {
+    transform: translateY(0);
+    background-color: #d4edda;
+  }
+  100% {
+    transform: translateY(0);
+    background-color: #e8f5e8;
+  }
+}
+
+@keyframes updateFlash {
+  0% {
+    background-color: #ffc107;
+    transform: scale(1.05);
+    font-weight: bold;
+  }
+  50% {
+    background-color: #fff3cd;
+    transform: scale(1.02);
+  }
+  100% {
+    background-color: #fff3cd;
+    transform: scale(1);
   }
 }

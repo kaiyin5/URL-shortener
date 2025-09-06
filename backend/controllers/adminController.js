@@ -2,24 +2,54 @@ import Url from '../models/Url.js';
 import mongoose from 'mongoose';
 import { logger } from '../utils/logger.js';
 
+// Store SSE connections
+const sseConnections = new Set();
+
+import { sanitizeSearchQuery } from '../utils/sanitizer.js';
+
+const ALLOWED_SORT_FIELDS = ['longURL', 'shortCode', 'accessCount', 'createdAt'];
+const MAX_LIMIT = 100;
+
 export const getAllUrls = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 25;
-    const sortField = req.query.sortField || 'createdAt';
+    const limit = Math.min(parseInt(req.query.limit) || 25, MAX_LIMIT);
+    const sortField = ALLOWED_SORT_FIELDS.includes(req.query.sortField) 
+      ? req.query.sortField 
+      : 'createdAt';
     const sortOrder = req.query.sortOrder === 'asc' ? 1 : -1;
+    const searchQuery = sanitizeSearchQuery(req.query.search || '');
+    const searchCategory = req.query.category || 'all';
     
     const skip = (page - 1) * limit;
     
     // Build sort object
     const sort = { [sortField]: sortOrder };
     
+    // Build search filter
+    let filter = {};
+    if (searchQuery.trim()) {
+      switch (searchCategory) {
+        case 'longURL':
+          filter.longURL = { $regex: searchQuery, $options: 'i' };
+          break;
+        case 'shortCode':
+          filter.shortCode = { $regex: searchQuery, $options: 'i' };
+          break;
+        default: // 'all'
+          filter.$or = [
+            { longURL: { $regex: searchQuery, $options: 'i' } },
+            { shortCode: { $regex: searchQuery, $options: 'i' } }
+          ];
+      }
+    }
+    
     const [urls, total] = await Promise.all([
-      Url.find({})
+      Url.find(filter)
         .sort(sort)
         .skip(skip)
         .limit(limit),
-      Url.countDocuments({})
+      Url.countDocuments(filter)
     ]);
     
     res.json({
@@ -29,6 +59,10 @@ export const getAllUrls = async (req, res) => {
         limit,
         total,
         pages: Math.ceil(total / limit)
+      },
+      search: {
+        query: searchQuery,
+        category: searchCategory
       }
     });
   } catch (error) {
@@ -48,6 +82,12 @@ export const deleteUrl = async (req, res) => {
     if (!url) {
       return res.status(404).json({ error: 'URL not found' });
     }
+    
+    // Broadcast deletion
+    broadcastUpdate({
+      type: 'urlDeleted',
+      data: { _id: url._id.toString() }
+    });
     
     res.json({ message: 'URL deleted successfully' });
   } catch (error) {
@@ -84,6 +124,12 @@ export const updateUrl = async (req, res) => {
       return res.status(404).json({ error: 'URL not found' });
     }
     
+    // Broadcast update
+    broadcastUpdate({
+      type: 'urlUpdated',
+      data: url
+    });
+    
     res.json(url);
   } catch (error) {
     logger.error('Failed to update URL', error, { id: req.params.id, shortCode: req.body.shortCode });
@@ -92,4 +138,37 @@ export const updateUrl = async (req, res) => {
     }
     res.status(500).json({ error: 'Server error' });
   }
+};
+
+export const sseUpdates = (req, res) => {
+  console.log('✅ SSE: Connection established for user:', req.user.username);
+  
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Cache-Control'
+  });
+  
+  sseConnections.add(res);
+  
+  // Send initial connection message
+  res.write(`data: ${JSON.stringify({ type: 'connected', message: 'SSE connected' })}\n\n`);
+  
+  req.on('close', () => {
+    console.log('🔌 SSE: Connection closed for user:', req.user.username);
+    sseConnections.delete(res);
+  });
+};
+
+export const broadcastUpdate = (data) => {
+  const message = `data: ${JSON.stringify(data)}\n\n`;
+  sseConnections.forEach(res => {
+    try {
+      res.write(message);
+    } catch (error) {
+      sseConnections.delete(res);
+    }
+  });
 };
