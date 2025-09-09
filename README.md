@@ -4,6 +4,8 @@
 
 A full-stack URL shortener application that converts long URLs into short, shareable links with integrated Web3 donation functionality and an embedded Python Snake game. The backend uses Node.js with Express for API services and MongoDB for data persistence, while Redis provides caching for improved performance. The frontend is built with React and TypeScript for reusable components and type safety. Web3 integration enables ETH donations with NFT rewards for contributors. The embedded Snake game runs via WebAssembly using pygbag.
 
+[![](https://mermaid.ink/img/pako:eNqdlV1vmzAUhv-K5UpTItGMNG34uJhEAkkjNVXUD01a6IUBB1jARrbpkrX97ztOSIuyaYrKlbHfxz7nPQfzgmOeUOziVJAqQw9-yBA8so72EyF-lFSgGVNUrEhMZYj3Cv14S734hM7Pv6HRMsQTwUHHEjQucsoUWpCUuuiOkliF-OmDGy-9pMwZ-qD9Nr1f9InMIk5EcrwDSEL2V5heVRV5TFTOGRqReK036txCbr2f8muwqQSVEobddvzB8qD0FjMUsKTiOVPyv-f4RBH0BQUbMISRAt1T8Zwf-TJZzjlLuT9CWh0RSVvJT5d3NMklGpM4a89fgwWByqigdYlGBY_XcUbAh86cKjIncm2g28mDTqAFzQBabFUGSU9JSXfRQLk61TaNSNr9l2cjbfhriNHj3Q26z7gAz3OWGkiHJWisHQzxKwqO5N9pNEA-ZzuLpVZcHymCMqJJQhN0z8ia7gPqPOdEo56UtIyKbVeDs0MsfjuWOWHQLyU0Tuv4d4VXgzdMHUrcueFpzrqNcq8NDtpdjRZUyFxCcjHVqsmRRtsPaeul6THeJIkeBLQHiKDeYD3SR8ZN4ntkdkB2vkvULgWR7bw1NnpvJ7UtKPLQKi8K92zlrAypBF9T92wwGDTj8195ojL3otq0mfEnmFHDRNHpjP8JJmgYxwwCxzwZmzSY5_t2MDwZm34Ou24w3_dM3z8Zm53oBzbgIs0T7K5IIamBSypKot_xi94uxNDEJfSjC8OErkhdKH1xvAFXEfaD8xK7StRACl6n2fs-dZUQRf2cwDX0IYGvmooxr5nCruXstsDuC95gtz_o2ebw0rwa2pY9tGxrYOAtTA_t3tWFZTomrPQv-86bgX_vDjV7zlV_eGnbjulYF_2BNTQw3AeKi_n-_7D7Tbz9AQ8J73s?type=png)](https://mermaid.live/edit#pako:eNqdlV1vmzAUhv-K5UpTItGMNG34uJhEAkkjNVXUD01a6IUBB1jARrbpkrX97ztOSIuyaYrKlbHfxz7nPQfzgmOeUOziVJAqQw9-yBA8so72EyF-lFSgGVNUrEhMZYj3Cv14S734hM7Pv6HRMsQTwUHHEjQucsoUWpCUuuiOkliF-OmDGy-9pMwZ-qD9Nr1f9InMIk5EcrwDSEL2V5heVRV5TFTOGRqReK036txCbr2f8muwqQSVEobddvzB8qD0FjMUsKTiOVPyv-f4RBH0BQUbMISRAt1T8Zwf-TJZzjlLuT9CWh0RSVvJT5d3NMklGpM4a89fgwWByqigdYlGBY_XcUbAh86cKjIncm2g28mDTqAFzQBabFUGSU9JSXfRQLk61TaNSNr9l2cjbfhriNHj3Q26z7gAz3OWGkiHJWisHQzxKwqO5N9pNEA-ZzuLpVZcHymCMqJJQhN0z8ia7gPqPOdEo56UtIyKbVeDs0MsfjuWOWHQLyU0Tuv4d4VXgzdMHUrcueFpzrqNcq8NDtpdjRZUyFxCcjHVqsmRRtsPaeul6THeJIkeBLQHiKDeYD3SR8ZN4ntkdkB2vkvULgWR7bw1NnpvJ7UtKPLQKi8K92zlrAypBF9T92wwGDTj8195ojL3otq0mfEnmFHDRNHpjP8JJmgYxwwCxzwZmzSY5_t2MDwZm34Ou24w3_dM3z8Zm53oBzbgIs0T7K5IIamBSypKot_xi94uxNDEJfSjC8OErkhdKH1xvAFXEfaD8xK7StRACl6n2fs-dZUQRf2cwDX0IYGvmooxr5nCruXstsDuC95gtz_o2ebw0rwa2pY9tGxrYOAtTA_t3tWFZTomrPQv-86bgX_vDjV7zlV_eGnbjulYF_2BNTQw3AeKi_n-_7D7Tbz9AQ8J73s)
+
 ## 🔗 Backend API Endpoints
 
 ### URL Management
@@ -72,9 +74,9 @@ A full-stack URL shortener application that converts long URLs into short, share
    - Install dependencies
    - Create .env from .env.example
    - Setup MongoDB database
-   - Create admin user (username: admin, password: Admin123)
+   - Create demo admin user (username: admin, password: Admin123)
    - Generate example URLs
-   - Run tests
+   - Run unit tests
 
 3. **Frontend Setup**
    ```bash
@@ -87,14 +89,12 @@ A full-stack URL shortener application that converts long URLs into short, share
    ```bash
    cd game
    
-   # Install Python dependencies
-   pip install -r requirements.txt
-   
-   # Start the Snake game server (runs on port 8000)
+   # Install Python dependencies and start the Snake game server (runs on port 8000)
    # Option 1: Use batch file (Windows)
    start_game.bat
    
    # Option 2: Direct command
+   pip install -r requirements.txt
    python run_game.py
    ```
 
