@@ -4,7 +4,47 @@
 
 A full-stack URL shortener application that converts long URLs into short, shareable links with integrated Web3 donation functionality and an embedded Python Snake game. The backend uses Node.js with Express for API services and MongoDB for data persistence, while Redis provides caching for improved performance. The frontend is built with React and TypeScript for reusable components and type safety. Web3 integration enables ETH donations with NFT rewards for contributors. The embedded Snake game runs via WebAssembly using pygbag.
 
-[![](https://mermaid.ink/img/pako:eNqdlV1vmzAUhv-K5UpTItGMNG34uJhEAkkjNVXUD01a6IUBB1jARrbpkrX97ztOSIuyaYrKlbHfxz7nPQfzgmOeUOziVJAqQw9-yBA8so72EyF-lFSgGVNUrEhMZYj3Cv14S734hM7Pv6HRMsQTwUHHEjQucsoUWpCUuuiOkliF-OmDGy-9pMwZ-qD9Nr1f9InMIk5EcrwDSEL2V5heVRV5TFTOGRqReK036txCbr2f8muwqQSVEobddvzB8qD0FjMUsKTiOVPyv-f4RBH0BQUbMISRAt1T8Zwf-TJZzjlLuT9CWh0RSVvJT5d3NMklGpM4a89fgwWByqigdYlGBY_XcUbAh86cKjIncm2g28mDTqAFzQBabFUGSU9JSXfRQLk61TaNSNr9l2cjbfhriNHj3Q26z7gAz3OWGkiHJWisHQzxKwqO5N9pNEA-ZzuLpVZcHymCMqJJQhN0z8ia7gPqPOdEo56UtIyKbVeDs0MsfjuWOWHQLyU0Tuv4d4VXgzdMHUrcueFpzrqNcq8NDtpdjRZUyFxCcjHVqsmRRtsPaeul6THeJIkeBLQHiKDeYD3SR8ZN4ntkdkB2vkvULgWR7bw1NnpvJ7UtKPLQKi8K92zlrAypBF9T92wwGDTj8195ojL3otq0mfEnmFHDRNHpjP8JJmgYxwwCxzwZmzSY5_t2MDwZm34Ou24w3_dM3z8Zm53oBzbgIs0T7K5IIamBSypKot_xi94uxNDEJfSjC8OErkhdKH1xvAFXEfaD8xK7StRACl6n2fs-dZUQRf2cwDX0IYGvmooxr5nCruXstsDuC95gtz_o2ebw0rwa2pY9tGxrYOAtTA_t3tWFZTomrPQv-86bgX_vDjV7zlV_eGnbjulYF_2BNTQw3AeKi_n-_7D7Tbz9AQ8J73s?type=png)](https://mermaid.live/edit#pako:eNqdlV1vmzAUhv-K5UpTItGMNG34uJhEAkkjNVXUD01a6IUBB1jARrbpkrX97ztOSIuyaYrKlbHfxz7nPQfzgmOeUOziVJAqQw9-yBA8so72EyF-lFSgGVNUrEhMZYj3Cv14S734hM7Pv6HRMsQTwUHHEjQucsoUWpCUuuiOkliF-OmDGy-9pMwZ-qD9Nr1f9InMIk5EcrwDSEL2V5heVRV5TFTOGRqReK036txCbr2f8muwqQSVEobddvzB8qD0FjMUsKTiOVPyv-f4RBH0BQUbMISRAt1T8Zwf-TJZzjlLuT9CWh0RSVvJT5d3NMklGpM4a89fgwWByqigdYlGBY_XcUbAh86cKjIncm2g28mDTqAFzQBabFUGSU9JSXfRQLk61TaNSNr9l2cjbfhriNHj3Q26z7gAz3OWGkiHJWisHQzxKwqO5N9pNEA-ZzuLpVZcHymCMqJJQhN0z8ia7gPqPOdEo56UtIyKbVeDs0MsfjuWOWHQLyU0Tuv4d4VXgzdMHUrcueFpzrqNcq8NDtpdjRZUyFxCcjHVqsmRRtsPaeul6THeJIkeBLQHiKDeYD3SR8ZN4ntkdkB2vkvULgWR7bw1NnpvJ7UtKPLQKi8K92zlrAypBF9T92wwGDTj8195ojL3otq0mfEnmFHDRNHpjP8JJmgYxwwCxzwZmzSY5_t2MDwZm34Ou24w3_dM3z8Zm53oBzbgIs0T7K5IIamBSypKot_xi94uxNDEJfSjC8OErkhdKH1xvAFXEfaD8xK7StRACl6n2fs-dZUQRf2cwDX0IYGvmooxr5nCruXstsDuC95gtz_o2ebw0rwa2pY9tGxrYOAtTA_t3tWFZTomrPQv-86bgX_vDjV7zlV_eGnbjulYF_2BNTQw3AeKi_n-_7D7Tbz9AQ8J73s)
+```mermaid
+graph TD
+    subgraph "User Interfaces"
+        A[User] --> B["Frontend Client Page: React"]
+        C[Admin User] --> D["Frontend Admin Dashboard: React"]
+    end
+
+    subgraph "Application Backend (Node.js/Express.js)"
+        E[Backend API Endpoints]
+    end
+
+    subgraph "Data & External Services"
+        F[MongoDB Database]
+        G[Redis Cache]
+        H["Ethereum Blockchain (MetaMask, NFTs)"]
+        I["Python Game Server (pygbag)"]
+    end
+
+    B -->|" URL Shortening, Redirection"| E
+    B -->|" Web3 Donations"| H
+    B -->|" Embedded Snake Game (via WebAssembly)"| I
+
+    D -->|" URL Management"| E
+    D -->|" Authentication (Login)"| E
+
+    E -->|" Data Persistence"| F
+    E -->|" Caching"| G
+    E -->|" Donation Tracking & NFT Logic"| H
+
+    I -->|" Serves Python Game as WebAssembly"| B
+
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style C fill:#f9f,stroke:#333,stroke-width:2px
+    style B fill:#bbf,stroke:#333,stroke-width:2px
+    style D fill:#bbf,stroke:#333,stroke-width:2px
+    style E fill:#90EE90,stroke:#333,stroke-width:2px
+    style F fill:#ADD8E6,stroke:#333,stroke-width:2px
+    style G fill:#ADD8E6,stroke:#333,stroke-width:2px
+    style H fill:#DDA0DD,stroke:#333,stroke-width:2px
+    style I fill:#bbf,stroke:#333,stroke-width:2px
+```
 
 ## 🔗 Backend API Endpoints
 
