@@ -35,15 +35,6 @@ graph TD
 
     I -->|" Serves Python Game as WebAssembly"| B
 
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style C fill:#f9f,stroke:#333,stroke-width:2px
-    style B fill:#bbf,stroke:#333,stroke-width:2px
-    style D fill:#bbf,stroke:#333,stroke-width:2px
-    style E fill:#90EE90,stroke:#333,stroke-width:2px
-    style F fill:#ADD8E6,stroke:#333,stroke-width:2px
-    style G fill:#ADD8E6,stroke:#333,stroke-width:2px
-    style H fill:#DDA0DD,stroke:#333,stroke-width:2px
-    style I fill:#bbf,stroke:#333,stroke-width:2px
 ```
 
 ## 🔗 Backend API Endpoints
